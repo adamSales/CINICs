@@ -15,7 +15,7 @@ dat <- dat%>%
   group_by(StudyId)%>%
   mutate(lagDate=lag(Date))%>%
   mutate_at(
-    vars(-Date,-StudyId,-lagDate,-BirthYear,-ends_with('_R'),-Site,-age,-rownum),
+    vars(-Date,-StudyId,-lagDate,-BirthYear,-ends_with('_R'),-Site,-age,-rownum,-gender),
     list(
       lastObs=~na.locf(if_else(!is.na(lag(.)),lagDate,naDate),na.rm=FALSE),
       lag=~na.locf(lag(.),na.rm=FALSE)
