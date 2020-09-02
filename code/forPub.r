@@ -1,10 +1,9 @@
 library(lme4)
 library(lmerTest)
-library(r2glmm)
 library(tidyverse)
 library(texreg)
 library(gridExtra)
-
+library(r2glmm)
 
 load('data/cleanedDataWithLags.RData')
 
@@ -74,7 +73,8 @@ pn <- function(x) formatC(x,digits=1,format='f')
 cap <- function(x) paste0(toupper(substr(x,1,1)),substr(x,2,nchar(x)))
 tab1dat <-
   dat%>%
-    filter(StudyId%in%model.frame(mods$Adhere)$StudyId)%>%
+  filter(StudyId%in%model.frame(mods$Adhere)$StudyId)%>%
+  mutate(Race_R=as.character(Race_R))%>%
       group_by(StudyId)%>%
         summarize(Age=mean(age,na.rm=TRUE),
                   Gender=na.omit(PresentSex_R)[1],
@@ -83,7 +83,8 @@ tab1dat <-
                   CD4=mean(cd4,na.rm=TRUE),
                   Depression=mean(dep_total,na.rm=TRUE),
                   `Log(Depression)`=mean(log(dep_total+1),na.rm=TRUE),
-                  QOL=mean(qol1_5_total,na.rm=TRUE)
+                  QOL=mean(qol1_5_total,na.rm=TRUE),
+                  A1C=mean(a1c,na.rm=TRUE)
                   )%>%
           select(-StudyId)
 
@@ -265,8 +266,18 @@ ggsave('plots/forPub/qolVscd4adhereAndDepressionAdj.png',width=6,height=6)
 save(predRange,file='fittedModels/predRanges.RData')
 
 
+#####################
+### mods w covariates, for appendix
+####################
+modsAdj <- map(modsS,~update(.,.~.+age+Site+PresentSex_R+Hispanic_R+Race_R))
 
+modsAdjCoef <- map(modsAdj,makeTrObj)
 
-modsS$CD4 <- cd4Mod
+screenreg(modsAdjCoef)
+
+appendixTable <- htmlreg(modsAdjCoef,file='coefTables/appendix.doc',doctype=TRUE,html.tag=TRUE,head.tag=TRUE,body.tag=TRUE,
+                         reorder.coef=c(1,2,5,18,21,3,4,19,22,6,20 ,7:17)
+                         )
+
 
 
